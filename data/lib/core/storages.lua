@@ -79,6 +79,10 @@ Reserved player action storage key ranges (const.h)
 ]]
 
 Storage = {
+	-- DUNGEON - CUSTOM
+	DungeonBoss = {
+		bossZyrtarch = 25034
+	},
 	-- General storages
 	isTraining = 30000,
 	NpcExhaust = 30001,
@@ -2248,7 +2252,8 @@ Storage = {
 		GraveDanger = {},
 		-- update 12.30
 		FeasterOfSouls = {},
-		PoltergeistOutfits = {}
+		PoltergeistOutfits = {},
+		
 	}
 }
 
@@ -2396,6 +2401,7 @@ GlobalStorage = {
 	Inquisition = 65013,
 	Yasir = 65014,
 	NightmareIsle = 65015
+
 }
 
 
