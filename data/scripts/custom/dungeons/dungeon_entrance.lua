@@ -235,17 +235,23 @@ function startNewWave.onUse(player, item, fromPosition, target, toPosition, isHo
 	local spectators = Game.getSpectators(centerDungeon, false, false, 25, 25, 25, 25)
 	local numberMonsterAlive = 0
 	local idToten = item:getId()
+	local familiar = {
+		[VOCATION.CLIENT_ID.SORCERER] = {id = 994, name = "Sorcerer familiar"},
+		[VOCATION.CLIENT_ID.DRUID] = {id = 993, name = "Druid familiar"},
+		[VOCATION.CLIENT_ID.PALADIN] = {id = 992, name = "Paladin familiar"},
+		[VOCATION.CLIENT_ID.KNIGHT] = {id = 991, name = "Knight familiar"}
+	}
+	local vocation = familiar[player:getVocation():getClientId()]
+	local familiarName
 	for i = 1, #spectators do
 		spectator = spectators[i]
-		if not spectator:isPlayer() then
+		if (player:hasFamiliar(vocation.id)) or not spectator:isPlayer() then
+			print(spectator:getName())
 			numberMonsterAlive = numberMonsterAlive + 1
 		end
 	end
-	print('Cliquei aqui', centerDungeon.x, centerDungeon.y, centerDungeon.z)
-	print('Storage', storageDungeon)
-	print('itemid', item.itemid)
+	print(vocation)
 	if numberMonsterAlive > 0 then -- storageDungeon == 25034 and	
-		print('MONSTROS VIVOS',numberMonsterAlive)
 		player:say("Round em andamento, ainda existem ".. (numberMonsterAlive).." monstros na arena.", TALKTYPE_MONSTER_SAY, false, player, fromPosition)
 	return true
 	else

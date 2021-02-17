@@ -1,10 +1,9 @@
 local bosses = {
-	['boss dragonking zyrtarch'] = { storage = Storage.DungeonBoss.bossZyrtarch}
+	['giant spider'] = { storage = Storage.DungeonBoss.bossZyrtarch}
 }
 
--- This will set the status of warzone (killing 1, 2 and 3 wz bosses in order you can open the chest and get "some golden fruits") and the reward chest storages
 local dungeonBossKill = CreatureEvent("DungeonBossKill")
-function dungeonBossKill.onKill(creature, target)
+function dungeonBossKill.onKill(player, target)
 	local targetMonster = target:getMonster()
 	if not targetMonster then
 		return true
