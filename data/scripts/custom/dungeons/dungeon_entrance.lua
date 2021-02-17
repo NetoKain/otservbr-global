@@ -51,12 +51,12 @@ local configMonsters = {
 	},
 
 	wavesMonsters = {
-		{monster = 'Dungeon Dragon', size = 1, boss = false},
-		{monster = 'Dungeon Dragon Lord', size = 1, boss = false},
-		{monster = 'Dungeon Ice Dragon', size = 1, boss = false},
-		{monster = 'Dungeon Wyrm', size = 1, boss = false},
-		{monster = 'Dungeon Undead Dragon', size = 1, boss = false},
-		{monster = 'Dungeon Ghastly Dragon', size = 1, boss = false},
+		{monster = 'Dungeon Dragon', size = 5, boss = false},
+		{monster = 'Dungeon Dragon Lord', size = 5, boss = false},
+		{monster = 'Dungeon Ice Dragon', size = 5, boss = false},
+		{monster = 'Dungeon Wyrm', size = 5, boss = false},
+		{monster = 'Dungeon Undead Dragon', size = 5, boss = false},
+		{monster = 'Dungeon Ghastly Dragon', size = 5, boss = false},
 		{monster = 'boss dragonking zyrtarch',
 		 size = 1,
 		 boss = true
@@ -64,13 +64,6 @@ local configMonsters = {
 	}
 
 }
-
-local summonArea = {
-	from = Position(x, y, z),
-	to = Position(x, y, z),
-	center = Position(x, y, z)
-}
-
 	-- Script automatically derives other pit positions from this one
 local firstDungeon = {
 		fromPos = {x = 1016, y = 1813, z = 7},
@@ -123,9 +116,30 @@ end
 -- 		end
 -- 		return true
 -- end
-local function summonWave(i, totenRounds)
+local function calculeAreaSummon(position)
+	local summonArea = {
+		from = Position(x, y, z),
+		to = Position(x, y, z),
+		center = Position(x, y, z)
+	}
+	summonArea.from = {x = position.x - 11, y = position.y - 9, z = position.z }
+	summonArea.to = {x = position.x + 11, y = position.y + 12, z = position.z }
+	summonArea.center = {x = position.x, y = position.y, z = position.z }
+
+	return summonArea
+end
+local function incrementRounds(increment)
+	local rounds = 1
+	rounds = rounds + increment
+	print('ROUNDS', rounds)
+	return rounds
+end
+local function summonWave(i, rounds, position, posToten)
 	local wave = configMonsters.wavesMonsters[i]	
 	local summonPosition
+	local summonArea = calculeAreaSummon(position)
+	local finishSpawn = false
+	print(item)
 	if wave.boss == true then
 		for i = 1, wave.size do
 			summonPosition = Position(math.random(summonArea.from.x,summonArea.to.x), math.random(summonArea.from.y, summonArea.to.y), 7)
@@ -133,43 +147,28 @@ local function summonWave(i, totenRounds)
 			print('summonPosition',summonPosition.x,summonPosition.y,summonPosition.z, 'Monster: ', wave.monster)		
 			summonPosition:sendMagicEffect(CONST_ME_TELEPORT)
 			print('monsterBoss', wave.boss)
+			finishSpawn = true
+			print('finishSpawn',finishSpawn)
+			-- if finishSpawn == true then
+			-- 		item:transform(11000)
+			-- 	else if finishSpawn == true then
+			-- 		item:transform(26090)
+			-- 	end
+			-- end
 		end
 	else
-		for i = 1, wave.size * totenRounds do
+		for i = 1, wave.size * rounds do
 			summonPosition = Position(math.random(summonArea.from.x,summonArea.to.x), math.random(summonArea.from.y, summonArea.to.y), 7)
 			Game.createMonster(wave.monster, summonPosition)
 			print('summonPosition',summonPosition.x,summonPosition.y,summonPosition.z, 'Monster: ', wave.monster)		
 			summonPosition:sendMagicEffect(CONST_ME_TELEPORT)
 			print('monsterNoBoss', wave.boss)
-		end		
-		if i == 7 then
-			totenStart.inProgress = false
 		end
+	
 	end
 end
 
-local function calculeAreaSummon(position)
-	local configFromPosMinion = summonArea.from
-	local configToPosMinion = summonArea.to
-	local configPosBoss = configMonsters.positionSpawn.minionsPos
-	configFromPosMinion = {x = position.x - 11, y = position.y - 9, z = position.z }
-	configToPosMinion = {x = position.x + 11, y = position.y + 12, z = position.z }
-	configPosBoss = {
-		x = position.x,
-		y = position.y - 5,
-		z = position.z
-	}
-	summonArea.from = configFromPosMinion
-	summonArea.to = configToPosMinion
-	summonArea.center = {
-		x = position.x,
-		y = position.y,
-		z = position.z
-	}
-	print('configFromPosMinion',configFromPosMinion.x, configFromPosMinion.y, configFromPosMinion.z)
-	print('configToPosMinion',configToPosMinion.x, configToPosMinion.y, configToPosMinion.z)
-	print('positionBoss',configPosBoss.x, configPosBoss.y, configPosBoss.z)
-end
+
 
 local function calculatingRoom(uid, position, column, line)
 	local player = Player(uid)
@@ -219,7 +218,6 @@ function dungeonEntrance.onStepIn(creature, item, position, fromPosition)
 	calculatingRoom(creature.uid, DungeonConfig.firstDungeonCenterPosition, 0, 0)
 	-- eventSpawn()
 	player:setStorageValue(Storage.DungeonBoss.bossZyrtarch, 25034)
-	totenStart.inProgress = false
 	-- 	for wave = 1, #configMonsters.wavesMonsters do
 	-- 		print('WAVE:', wave)
 	-- 		addEvent(summonWave, wave * 5 * 1000, wave, totenStart.rounds)			
@@ -232,21 +230,35 @@ dungeonEntrance:register()
 local startNewWave = Action()
 function startNewWave.onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	local posToten = item:getPosition()
-	posToten = {x = positem.x, y = positem.y + 1, positem.z}
+	local centerDungeon = {x = posToten.x, y = posToten.y + 1, z = posToten.z}
 	local storageDungeon = player:getStorageValue(Storage.DungeonBoss.bossZyrtarch)
-	print('Cliquei aqui', positem.x, positem.y, positem.z)
-	if totenStart.inProgress == true and storageDungeon == 25034 and item.itemid == 10999 then
-	-- player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Only the worthy may pass.")
-	player:say("Round em andamento, aguarde.", TALKTYPE_MONSTER_SAY, false, player, fromPosition)
+	local spectators = Game.getSpectators(centerDungeon, false, false, 25, 25, 25, 25)
+	local numberMonsterAlive = 0
+	local idToten = item:getId()
+	for i = 1, #spectators do
+		spectator = spectators[i]
+		if not spectator:isPlayer() then
+			numberMonsterAlive = numberMonsterAlive + 1
+		end
+	end
+	print('Cliquei aqui', centerDungeon.x, centerDungeon.y, centerDungeon.z)
+	print('Storage', storageDungeon)
+	print('itemid', item.itemid)
+	if numberMonsterAlive > 0 then -- storageDungeon == 25034 and	
+		print('MONSTROS VIVOS',numberMonsterAlive)
+		player:say("Round em andamento, ainda existem ".. (numberMonsterAlive).." monstros na arena.", TALKTYPE_MONSTER_SAY, false, player, fromPosition)
 	return true
 	else
+		local rounds = incrementRounds(1)
 		player:say("Round vai iniciar em instantes, prepare-se.", TALKTYPE_MONSTER_SAY, false, player, fromPosition)
+		if item.itemid == 11000 then 
 		item:transform(10999)
-		totenStart.rounds = totenStart.rounds + 1
-		totenStart.inProgress = true
+		else if item.itemid == 26090 then
+			item:transform(26092)
+		end
+	end
 		for wave = 1, #configMonsters.wavesMonsters do
-			print('WAVE:', wave)
-			addEvent(summonWave, wave * 5 * 1000, wave, totenStart.rounds)			
+		local eventSpawn = addEvent(summonWave, wave * 5 * 1000, wave, rounds, centerDungeon, posToten)		 		
 		end
 		return true
 	end
@@ -256,30 +268,34 @@ end
 startNewWave:aid(25033)
 startNewWave:register()
 
-local dungeonBoss = CreatureEvent("DungeonBoss")
-function dungeonBoss.onKill(creature, target)
-	local targetMonster = target:getMonster()
-	if not targetMonster then
-		return true
-	end
+-- local dungeonBoss = CreatureEvent("DungeonBoss")
+-- function dungeonBoss.onKill(creature, target)
+-- 	print('creature', creature, 'target', target)
+-- 	local targetMonster = target:getMonster()
+-- 	if not targetMonster then
+-- 		return true
+-- 	end
 
-	if targetMonster:getName():lower() ~= 'boss dragonking zyrtarch' then
-		return true
-	end
+-- 	print('targetMonster',targetMonster)
 
-	local spectators, spectator = Game.getSpectators(summonArea.center, false, true, 20, 20, 20, 20)
-	for i = 1, #spectators do
-		spectator = spectators[i]
-		spectator:say("Você venceu esse round! Para o próximo é necessário usar a estátua próxima ao centro da arena.", TALKTYPE_MONSTER_SAY)
-		totenStart.inProgress = false
-		if spectator:getStorageValue(Storage.DungeonBoss.bossZyrtarch) == 25034 then
-			spectator:setStorageValue(Storage.DungeonBoss.bossZyrtarch, 25035)
-		end
-	end
-	return true
-end
+-- 	if targetMonster:getName():lower() == 'boss dragonking zyrtarch' then
+-- 		return true
+-- 	end
 
-dungeonBoss:register()
+-- 	local spectators, spectator = Game.getSpectators(summonArea.center, false, true, 20, 20, 20, 20)
+-- 	for i = 1, #spectators do
+-- 		spectator = spectators[i]
+-- 		spectator:say("Round vai iniciar em instantes, prepare-se.", TALKTYPE_MONSTER_SAY, false, player, fromPosition)
+-- 		if spectator:getStorageValue(Storage.DungeonBoss.bossZyrtarch) == 25034 then
+-- 			spectator:setStorageValue(Storage.DungeonBoss.bossZyrtarch, 25035)
+-- 		end
+-- 	end
+-- 	return true
+-- end
+
+-- dungeonBoss:register()
+
+
 
 local function removeDungeonMonsters(position)
 	local arrayPos = {
@@ -375,4 +391,5 @@ dungeonExit:register()
 -- end
 
 -- dungeonBoss:register()
+
 
